@@ -20,6 +20,8 @@
             base.Dispose(disposing);
         }
 
+        TextBox[,] textboxes = new TextBox[9, 9];
+
         #region Windows Form Designer generated code
 
         /// <summary>
@@ -28,10 +30,16 @@
         /// </summary>
         private void InitializeComponent()
         {
-            components = new System.ComponentModel.Container();
+            SuspendLayout();
+            // 
+            // Form1
+            // 
+            AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Name = "Form1";
             Text = "Form1";
+            ResumeLayout(false);
         }
 
         #endregion
