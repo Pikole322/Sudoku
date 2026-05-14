@@ -3,6 +3,8 @@ namespace Sudoku
     public partial class Form1 : Form
     {
         int[,] table;
+
+        TextBox selected_textbox;
         public Form1()
         {
             InitializeComponent();
@@ -20,19 +22,30 @@ namespace Sudoku
             };
  
 
+
+            int spacing = 5;
+
             int box_size = 30;
-            Point offset = new Point(ClientSize.Width / 2 - 9 * box_size / 2, ClientSize.Height / 2 - 9 * box_size / 2);
+            Point offset = new Point(ClientSize.Width / 2 - 9 * box_size / 2 - 2 * spacing / 2, ClientSize.Height / 2 - 9 * box_size / 2 - 2 * spacing / 2);
+
+            int spacing_x = -spacing;
+            int spacing_y = -spacing;
+
             for (int y = 0; y < 9; y++)
             {
+                spacing_y = y % 3 == 0 ? spacing_y + 10 : spacing_y;
+                spacing_x = -spacing;
                 for (int x = 0; x < 9; x++)
                 {
                     textboxes[y, x] = new TextBox();
-                    textboxes[y, x].SetBounds(x * box_size + offset.X, y * box_size + offset.Y, box_size, box_size);
+                    spacing_x = x % 3 == 0 ? spacing_x + 10 : spacing_x;
+                    //textboxes[y, x]
+                    textboxes[y, x].SetBounds(x * box_size + offset.X + spacing_x, y * box_size + offset.Y + spacing_y, box_size, box_size);
                     textboxes[y, x].Multiline = true;
                     textboxes[y, x].TextAlign = HorizontalAlignment.Center;
                     textboxes[y, x].Font = new Font("Arial", 14, FontStyle.Regular);
                     textboxes[y, x].TextChanged += on_number_changed;
-                    
+                    textboxes[y, x].Tag = new Point(x, y);
                  
                     
                     this.Controls.Add(textboxes[y, x]);
@@ -44,16 +57,36 @@ namespace Sudoku
         protected override void OnPaint(PaintEventArgs e)
         {
             base.OnPaint(e);
+            //Pen purple = new Pen(Color.Purple);
 
             //textbox.Invalidate();
+            //Graphics g = e.Graphics;
+            //if (selected_textbox != null)
+                //g.FillRectangle(Brushes.Purple, new Rectangle(selected_textbox.Location, selected_textbox.Size));
+            //g.DrawRectangle(purple, new Rectangle((int)l, 0, 30, 30));
+            //Invalidate();
+            //Refresh();
+            //Invalidate();
 
-            
+
         }
 
         private void on_number_changed(object sender, EventArgs e)
         {
-            TextBox box = (TextBox)sender;
-            box.BackColor = Color.Red;
+            var box = sender as TextBox;
+            Point pos = (Point)box.Tag;
+            int num = int.Parse(box.Text); // NALEZY DODAC TRYPARSE LUB ZABLOKOWAC MOZLIWOSC WPISYWANIA NIE CYFER
+
+            if (table[pos.Y, pos.X] != num)
+            {
+                box.BackColor = Color.Red;
+            }
+            else
+            {
+                box.BackColor = Color.LightGreen;
+            }
+
+            selected_textbox = sender as TextBox;
         }
     }
 }
