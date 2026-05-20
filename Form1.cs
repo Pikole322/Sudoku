@@ -1,8 +1,11 @@
+using System.Drawing.Text;
+using System.Security.Cryptography.X509Certificates;
+
 namespace Sudoku
 {
     public partial class Form1 : Form
     {
-        
+
 
 
         int[,] table;
@@ -10,39 +13,39 @@ namespace Sudoku
         TextBox selected_textbox;
         public Form1()
         {
-            var panel1 = new Panel
-            {
-                Dock = DockStyle.Fill,
-                BackgroundImageLayout = ImageLayout.Stretch,
-                BackColor = Color.White
-            };
+            //var panel1 = new Panel
+            //{
+            //    Dock = DockStyle.Fill,
+            //    BackgroundImageLayout = ImageLayout.Stretch,
+            //    BackColor = Color.White
+            //};
 
-            string imagesDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Images");
-            string imageFile = Path.Combine(imagesDir, "background.png");
+            //string imagesDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Images");
+            //string imageFile = Path.Combine(imagesDir, "background.png");
 
-            if (File.Exists(imageFile))
-            {
-                try
-                {
-                    panel1.BackgroundImage = Image.FromFile(imageFile);
-                }
-                catch
-                {
-                    panel1.BackgroundImage = null;
-                }
-            }
-            else
-            {
-                panel1.BackgroundImage = null;
-            }
+            //if (File.Exists(imageFile))
+            //{
+            //    try
+            //    {
+            //        panel1.BackgroundImage = Image.FromFile(imageFile);
+            //    }
+            //    catch
+            //    {
+            //        panel1.BackgroundImage = null;
+            //    }
+            //}
+            //else
+            //{
+            //    panel1.BackgroundImage = null;
+            //}
 
-            InitializeComponent();
-            this.Controls.Add(panel1);
-            panel1.SendToBack();
+
+            //this.Controls.Add(panel1);
+            //BackgroundImage = panel1.BackgroundImage;
 
             this.WindowState = FormWindowState.Maximized;
-
-            table = new int [9, 9]{
+            InitializeComponent();
+            table = new int[9, 9]{
                 { 5, 4, 2, 6, 3, 9, 8, 1, 7},
                 { 6, 8, 7, 5, 2, 1, 3, 9, 4},
                 { 3, 9, 1, 8, 4, 7, 5, 2, 6},
@@ -79,7 +82,7 @@ namespace Sudoku
         {
             float boardProportion = 0.82f;
             int minSide = Math.Min(ClientSize.Width, ClientSize.Height);
-            int computedBoxSize = Math.Max(24, (int)(minSide * boardProportion / 9f)); 
+            int computedBoxSize = Math.Max(24, (int)(minSide * boardProportion / 9f));
 
             int blockGap = Math.Max(8, computedBoxSize / 3);
 
@@ -108,7 +111,7 @@ namespace Sudoku
                 }
             }
 
-            Invalidate(); 
+            Invalidate();
         }
 
         protected override void OnPaint(PaintEventArgs e)
@@ -138,6 +141,11 @@ namespace Sudoku
             }
 
             selected_textbox = sender as TextBox;
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }
