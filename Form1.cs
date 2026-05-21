@@ -21,21 +21,7 @@ namespace Sudoku
 
             this.WindowState = FormWindowState.Maximized;
             InitializeComponent();
-            table = new int[9, 9]{
-                { 5, 4, 2, 6, 3, 9, 8, 1, 7},
-                { 6, 8, 7, 5, 2, 1, 3, 9, 4},
-                { 3, 9, 1, 8, 4, 7, 5, 2, 6},
-                { 9, 5, 6, 4, 1, 2, 7, 8, 3},
-                { 8, 1, 3, 7, 5, 6, 9, 4, 2},
-                { 2, 7, 4, 3, 9, 8, 1, 6, 5},
-                { 4, 6, 8, 9, 7, 5, 2, 3, 1},
-                { 1, 3, 5, 2, 8, 4, 6, 7, 9},
-                { 7, 2, 9, 1, 6, 3, 4, 5, 8},
-            };
-
-
-
-
+         
             for (int y = 0; y < 9; y++)
             {
                 for (int x = 0; x < 9; x++)
@@ -135,9 +121,7 @@ namespace Sudoku
                 for (int x = 0; x < 9; x++)
                 {
                     foreach (int num in rand_nums)
-                        if (exists_in_column(x, num, ref table) || exists_in_row(y, num, ref table) || exists_in_square(x, y, num, ref table))
-                            break;
-                        else
+                        if (!exists_in_column(x, num, ref table) && !exists_in_row(y, num, ref table) && !exists_in_square(x, y, num, ref table))
                             table[y, x] = num;
                 }
             }

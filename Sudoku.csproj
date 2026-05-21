@@ -6,11 +6,11 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
-    <ApplicationIcon>bin\Debug\net10.0-windows\Images\Gemini_Generated_Image_20wupc20wupc20wu-removebg-preview.ico</ApplicationIcon>
+    <ApplicationIcon>bin\Debug\net10.0-windows\Images\ikona.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="bin\Debug\net10.0-windows\Images\Gemini_Generated_Image_20wupc20wupc20wu-removebg-preview.ico" />
+    <Content Include="bin\Debug\net10.0-windows\Images\ikona.ico" />
   </ItemGroup>
 
   <ItemGroup>
