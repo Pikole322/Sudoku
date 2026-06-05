@@ -9,7 +9,24 @@ namespace Sudoku
         int[,] table;
 
         TextBox selected_textbox;
-        //Menu kontroler
+
+        private Label lblTimer;
+        private Label lblErrors;
+        private System.Windows.Forms.Timer gameTimer;
+        private int secondsElapsed;
+        private int errorCount;
+        private bool[,] wrongFlags;
+
+        private ListView lvBestTimes;
+        private int? bestTimeEasy;
+        private int? bestTimeMedium;
+        private int? bestTimeHard;
+        private int roundsEasy;
+        private int roundsMedium;
+        private int roundsHard;
+
+        private int currentDifficulty;
+
         public class Menu
         {
             private ComboBox comboDifficulty;
@@ -74,7 +91,6 @@ namespace Sudoku
                 controls = new Control[] { lblDifficulty, comboDifficulty, btnStart, lblCreatedBy };
 
                 PositionControls(mainForm);
-                // kotwiczymy menu w prawym górnym rogu, a podpis w lewym dolnym
                 lblDifficulty.Anchor = AnchorStyles.Top | AnchorStyles.Right;
                 comboDifficulty.Anchor = AnchorStyles.Top | AnchorStyles.Right;
                 btnStart.Anchor = AnchorStyles.Top | AnchorStyles.Right;
@@ -85,7 +101,6 @@ namespace Sudoku
 
             private void PositionControls(Form mainForm)
             {
-                // Pozycjonowanie prawego menu (label + combo + przycisk)
                 int leftRight = Math.Max(0, mainForm.ClientSize.Width - controlWidth - marginRight);
                 int currentTop = topOffset;
 
@@ -102,10 +117,8 @@ namespace Sudoku
                 btnStart.Left = leftRight;
                 btnStart.Top = currentTop;
 
-                // Pozycjonowanie podpisu w lewym dolnym rogu
                 lblCreatedBy.MaximumSize = new Size(mainForm.ClientSize.Width - marginLeft * 2, 0);
                 lblCreatedBy.Left = marginLeft;
-                // ustaw top tak, aby znalaz³ siê nad dolnym marginesem
                 lblCreatedBy.Top = Math.Max(0, mainForm.ClientSize.Height - marginBottom - lblCreatedBy.Height);
             }
         }
@@ -114,6 +127,55 @@ namespace Sudoku
         {
             this.WindowState = FormWindowState.Maximized;
             InitializeComponent();
+
+            lblTimer = new Label
+            {
+                Text = "Czas: 00:00",
+                AutoSize = true,
+                Font = new Font("Segoe UI", 14f, FontStyle.Regular),
+                ForeColor = Color.Black,
+                Left = 10,
+                Top = 10,
+                Anchor = AnchorStyles.Top | AnchorStyles.Left
+            };
+            Controls.Add(lblTimer);
+
+            lblErrors = new Label
+            {
+                Text = "B³êdy: 0/3",
+                AutoSize = true,
+                Font = new Font("Segoe UI", 14f, FontStyle.Regular),
+                ForeColor = Color.Black,
+                Left = 10,
+                Top = lblTimer.Bottom + 8,
+                Anchor = AnchorStyles.Top | AnchorStyles.Left
+            };
+            Controls.Add(lblErrors);
+
+            gameTimer = new System.Windows.Forms.Timer();
+            gameTimer.Interval = 1000;
+            gameTimer.Tick += GameTimer_Tick;
+
+            lvBestTimes = new ListView
+            {
+                View = View.Details,
+                GridLines = true,
+                FullRowSelect = false,
+                Width = 260,
+                Height = 120,
+                Left = 10,
+                Top = lblErrors.Bottom + 8,
+                Anchor = AnchorStyles.Top | AnchorStyles.Left
+            };
+            lvBestTimes.Columns.Add("Poziom", 90, HorizontalAlignment.Left);
+            lvBestTimes.Columns.Add("Najlepszy", 90, HorizontalAlignment.Left);
+            lvBestTimes.Columns.Add("Rundy", 60, HorizontalAlignment.Left);
+
+            lvBestTimes.Items.Add(new ListViewItem(new[] { "£atwy", "-", "0" }));
+            lvBestTimes.Items.Add(new ListViewItem(new[] { "Œredni", "-", "0" }));
+            lvBestTimes.Items.Add(new ListViewItem(new[] { "Trudny", "-", "0" }));
+
+            Controls.Add(lvBestTimes);
 
             for (int y = 0; y < 9; y++)
             {
@@ -138,8 +200,34 @@ namespace Sudoku
             this.Resize += (s, e) => LayoutBoard();
         }
 
+        private void GameTimer_Tick(object sender, EventArgs e)
+        {
+            secondsElapsed++;
+            UpdateTimerLabel();
+        }
+
+        private void UpdateTimerLabel()
+        {
+            TimeSpan ts = TimeSpan.FromSeconds(secondsElapsed);
+            lblTimer.Text = $"Czas: {ts.Minutes:00}:{ts.Seconds:00}";
+        }
+
+        private void UpdateErrorsLabel()
+        {
+            lblErrors.Text = $"B³êdy: {errorCount}/3";
+        }
+
         private void gra(int difficulty)
         {
+            currentDifficulty = difficulty;
+
+            secondsElapsed = 0;
+            errorCount = 0;
+            wrongFlags = new bool[9, 9];
+            UpdateTimerLabel();
+            UpdateErrorsLabel();
+            gameTimer.Stop();
+
             table = generate_table();
 
             int[,] puzzle = (int[,])table.Clone();
@@ -178,6 +266,7 @@ namespace Sudoku
                         textboxes[y, x].ReadOnly = true;
                         textboxes[y, x].BackColor = Color.LightGray;
                         textboxes[y, x].ForeColor = Color.Black;
+                        textboxes[y, x].Enabled = true;
                     }
                     else
                     {
@@ -185,10 +274,14 @@ namespace Sudoku
                         textboxes[y, x].ReadOnly = false;
                         textboxes[y, x].BackColor = Color.White;
                         textboxes[y, x].ForeColor = Color.Black;
+                        textboxes[y, x].Enabled = true;
                     }
                 }
             }
 
+            secondsElapsed = 0;
+            UpdateTimerLabel();
+            gameTimer.Start();
         }
 
         private void LayoutBoard()
@@ -251,16 +344,125 @@ namespace Sudoku
                 return;
             }
 
+
             if (table[pos.Y, pos.X] != num)
             {
                 box.BackColor = Color.Red;
+                if (!wrongFlags[pos.Y, pos.X])
+                {
+                    wrongFlags[pos.Y, pos.X] = true;
+                    errorCount++;
+                    UpdateErrorsLabel();
+                    if (errorCount >= 3)
+                    {
+                        HandleGameOver();
+                    }
+                }
             }
             else
             {
                 box.BackColor = Color.LightGreen;
+                if (wrongFlags[pos.Y, pos.X])
+                {
+                    wrongFlags[pos.Y, pos.X] = false;
+                }
+
+                if (IsPuzzleSolved())
+                {
+                    HandleGameWin();
+                }
             }
 
             selected_textbox = sender as TextBox;
+        }
+
+        private bool IsPuzzleSolved()
+        {
+            if (table == null) return false;
+
+            for (int y = 0; y < 9; y++)
+            {
+                for (int x = 0; x < 9; x++)
+                {
+                    if (!int.TryParse(textboxes[y, x].Text, out int val))
+                        return false;
+                    if (val != table[y, x])
+                        return false;
+                }
+            }
+            return true;
+        }
+
+        private void HandleGameWin()
+        {
+            gameTimer.Stop();
+
+            for (int y = 0; y < 9; y++)
+            {
+                for (int x = 0; x < 9; x++)
+                {
+                    textboxes[y, x].Enabled = false;
+                }
+            }
+
+            RegisterRoundResult(currentDifficulty, secondsElapsed);
+
+            MessageBox.Show($"Wygra³eœ! Czas: {FormatTime(secondsElapsed)}", "Koniec gry", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private void RegisterRoundResult(int difficulty, int seconds)
+        {
+            switch (difficulty)
+            {
+                case 1:
+                    roundsEasy++;
+                    if (!bestTimeEasy.HasValue || seconds < bestTimeEasy.Value)
+                        bestTimeEasy = seconds;
+                    UpdateBestTimesRow(0, bestTimeEasy, roundsEasy);
+                    break;
+                case 2:
+                    roundsMedium++;
+                    if (!bestTimeMedium.HasValue || seconds < bestTimeMedium.Value)
+                        bestTimeMedium = seconds;
+                    UpdateBestTimesRow(1, bestTimeMedium, roundsMedium);
+                    break;
+                case 3:
+                    roundsHard++;
+                    if (!bestTimeHard.HasValue || seconds < bestTimeHard.Value)
+                        bestTimeHard = seconds;
+                    UpdateBestTimesRow(2, bestTimeHard, roundsHard);
+                    break;
+            }
+        }
+
+        private void UpdateBestTimesRow(int rowIndex, int? bestSeconds, int rounds)
+        {
+            if (rowIndex < 0 || rowIndex >= lvBestTimes.Items.Count) return;
+
+            string bestStr = bestSeconds.HasValue ? FormatTime(bestSeconds.Value) : "-";
+            lvBestTimes.Items[rowIndex].SubItems[1].Text = bestStr;
+            lvBestTimes.Items[rowIndex].SubItems[2].Text = rounds.ToString();
+        }
+
+        private string FormatTime(int totalSeconds)
+        {
+            TimeSpan ts = TimeSpan.FromSeconds(totalSeconds);
+            return $"{ts.Minutes:00}:{ts.Seconds:00}";
+        }
+
+        private void HandleGameOver()
+        {
+            gameTimer.Stop();
+
+            for (int y = 0; y < 9; y++)
+            {
+                for (int x = 0; x < 9; x++)
+                {
+                    textboxes[y, x].Enabled = false;
+                }
+            }
+
+            MessageBox.Show("Przegra³eœ — osi¹gn¹³eœ 3 b³êdy.", "Koniec gry", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private int[,] generate_table()
@@ -272,7 +474,6 @@ namespace Sudoku
 
             for (int y = 0; y < 9; y++)
             {
-                //rnd.Shuffle(rand_nums);
                 for (int x = 0; x < 9; x++)
                 {
                     foreach (int num in rand_nums)
@@ -310,8 +511,6 @@ namespace Sudoku
 
         private bool exists_in_square(int cell_x, int cell_y, int num, ref int[,] table)
         {
-            //if (num == 8)
-            //    Debug.Assert(false);
             int square_x = cell_x / 3;
             int square_y = cell_y / 3;
 
@@ -327,6 +526,11 @@ namespace Sudoku
         }
 
         private void Form1_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void timer1_Tick(object sender, EventArgs e)
         {
 
         }
