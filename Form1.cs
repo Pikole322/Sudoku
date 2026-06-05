@@ -1,5 +1,6 @@
 using System;
 using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace Sudoku
@@ -26,6 +27,8 @@ namespace Sudoku
         private int roundsHard;
 
         private int currentDifficulty;
+
+        private readonly Random rng = new Random();
 
         public class Menu
         {
@@ -231,7 +234,6 @@ namespace Sudoku
             table = generate_table();
 
             int[,] puzzle = (int[,])table.Clone();
-            Random rnd = new Random();
 
             int clues;
             switch (difficulty)
@@ -245,16 +247,42 @@ namespace Sudoku
             int totalCells = 9 * 9;
             int cellsToClear = totalCells - clues;
 
-            while (cellsToClear > 0)
+            var indices = Enumerable.Range(0, totalCells).ToList();
+
+            int maxPasses = 6;
+            for (int pass = 0; pass < maxPasses && cellsToClear > 0; pass++)
             {
-                int rx = rnd.Next(0, 9);
-                int ry = rnd.Next(0, 9);
-                if (puzzle[ry, rx] != 0)
+                for (int i = indices.Count - 1; i > 0; i--)
                 {
+                    int j = rng.Next(i + 1);
+                    int tmp = indices[i];
+                    indices[i] = indices[j];
+                    indices[j] = tmp;
+                }
+
+                for (int k = 0; k < indices.Count && cellsToClear > 0; k++)
+                {
+                    int linear = indices[k];
+                    int rx = linear % 9;
+                    int ry = linear / 9;
+
+                    if (puzzle[ry, rx] == 0) continue;
+
+                    int saved = puzzle[ry, rx];
                     puzzle[ry, rx] = 0;
-                    cellsToClear--;
+
+                    int solutions = SolveCount((int[,])puzzle.Clone(), 2);
+                    if (solutions == 1)
+                    {
+                        cellsToClear--;
+                    }
+                    else
+                    {
+                        puzzle[ry, rx] = saved;
+                    }
                 }
             }
+
 
             for (int y = 0; y < 9; y++)
             {
@@ -282,6 +310,104 @@ namespace Sudoku
             secondsElapsed = 0;
             UpdateTimerLabel();
             gameTimer.Start();
+        }
+
+        private int[,] generate_table()
+        {
+            int[,] board = new int[9, 9];
+            FillBoard(board);
+            return board;
+        }
+
+        private bool FillBoard(int[,] board)
+        {
+            for (int y = 0; y < 9; y++)
+            {
+                for (int x = 0; x < 9; x++)
+                {
+                    if (board[y, x] == 0)
+                    {
+                        int[] nums = GetShuffledNumbers();
+                        foreach (int n in nums)
+                        {
+                            if (!exists_in_row(y, n, ref board) && !exists_in_column(x, n, ref board) && !exists_in_square(x, y, n, ref board))
+                            {
+                                board[y, x] = n;
+                                if (FillBoard(board)) return true;
+                                board[y, x] = 0;
+                            }
+                        }
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        private int[] GetShuffledNumbers()
+        {
+            int[] arr = new int[] { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+            for (int i = arr.Length - 1; i > 0; i--)
+            {
+                int j = rng.Next(i + 1);
+                int tmp = arr[i];
+                arr[i] = arr[j];
+                arr[j] = tmp;
+            }
+            return arr;
+        }
+
+        private int SolveCount(int[,] board, int limit)
+        {
+            int count = 0;
+
+            void Dfs()
+            {
+                if (count >= limit) return;
+
+                int bestY = -1, bestX = -1;
+                int bestCandidates = int.MaxValue;
+
+                for (int y = 0; y < 9; y++)
+                {
+                    for (int x = 0; x < 9; x++)
+                    {
+                        if (board[y, x] != 0) continue;
+                        int candidates = 0;
+                        for (int n = 1; n <= 9; n++)
+                        {
+                            if (!exists_in_row(y, n, ref board) && !exists_in_column(x, n, ref board) && !exists_in_square(x, y, n, ref board))
+                                candidates++;
+                        }
+                        if (candidates == 0) return; 
+                        if (candidates < bestCandidates)
+                        {
+                            bestCandidates = candidates;
+                            bestY = y;
+                            bestX = x;
+                        }
+                    }
+                }
+
+                if (bestY == -1)
+                {
+                    count++;
+                    return;
+                }
+
+                for (int n = 1; n <= 9 && count < limit; n++)
+                {
+                    if (!exists_in_row(bestY, n, ref board) && !exists_in_column(bestX, n, ref board) && !exists_in_square(bestX, bestY, n, ref board))
+                    {
+                        board[bestY, bestX] = n;
+                        Dfs();
+                        board[bestY, bestX] = 0;
+                    }
+                }
+            }
+
+            Dfs();
+            return count;
         }
 
         private void LayoutBoard()
@@ -463,30 +589,6 @@ namespace Sudoku
             }
 
             MessageBox.Show("Przegra³eœ — osi¹gn¹³eœ 3 b³êdy.", "Koniec gry", MessageBoxButtons.OK, MessageBoxIcon.Information);
-        }
-
-        private int[,] generate_table()
-        {
-            int[,] table = new int[9, 9];
-
-            int[] rand_nums = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-            Random rnd = new Random();
-
-            for (int y = 0; y < 9; y++)
-            {
-                for (int x = 0; x < 9; x++)
-                {
-                    foreach (int num in rand_nums)
-                        if (!exists_in_column(x, num, ref table) && !exists_in_row(y, num, ref table) && !exists_in_square(x, y, num, ref table))
-                        {
-                            table[y, x] = num;
-                            break;
-                        }
-                }
-            }
-
-            return table;
-
         }
 
         private bool exists_in_column(int x, int num, ref int[,] table)
