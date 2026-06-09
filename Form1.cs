@@ -8,8 +8,7 @@ namespace Sudoku
     public partial class Form1 : Form
     {
         int[,] table;
-
-        TextBox selected_textbox;
+        TextBox[,] textboxes = new TextBox[9, 9];
 
         private Label lblTimer;
         private Label lblErrors;
@@ -190,6 +189,7 @@ namespace Sudoku
                     textboxes[y, x].TextAlign = HorizontalAlignment.Center;
                     textboxes[y, x].Font = new Font("Arial", 14, FontStyle.Regular);
                     textboxes[y, x].TextChanged += on_number_changed;
+                    textboxes[y, x].KeyPress += on_key_press;
                     textboxes[y, x].Tag = new Point(x, y);
                     textboxes[y, x].Text = string.Empty;
                     this.Controls.Add(textboxes[y, x]);
@@ -459,14 +459,12 @@ namespace Sudoku
             if (!int.TryParse(box.Text, out int num))
             {
                 box.BackColor = Color.White;
-                selected_textbox = box;
                 return;
             }
 
             if (table == null)
             {
                 box.BackColor = Color.White;
-                selected_textbox = box;
                 return;
             }
 
@@ -498,8 +496,21 @@ namespace Sudoku
                     HandleGameWin();
                 }
             }
+        }
 
-            selected_textbox = sender as TextBox;
+        private void on_key_press(object sender, System.Windows.Forms.KeyPressEventArgs e)
+        {
+            TextBox textbox = sender as TextBox;
+
+            if (textbox.Text.Length > 0 && is_key_valid(e.KeyChar))
+                textbox.Text = "";
+                
+            e.Handled = !(is_key_valid(e.KeyChar));
+        }
+
+        private bool is_key_valid(char key)
+        {
+            return key >= '1' && key <= '9';
         }
 
         private bool IsPuzzleSolved()

@@ -19,9 +19,6 @@
             }
             base.Dispose(disposing);
         }
-
-        TextBox[,] textboxes = new TextBox[9, 9];
-
         #region Windows Form Designer generated code
 
         /// <summary>
