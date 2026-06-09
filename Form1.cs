@@ -2,6 +2,7 @@ using System;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+using System.Windows.Forms.VisualStyles;
 
 namespace Sudoku
 {
@@ -185,8 +186,9 @@ namespace Sudoku
                 {
                     textboxes[y, x] = new TextBox();
                     textboxes[y, x].SetBounds(0, 0, 30, 30);
-                    textboxes[y, x].Multiline = true;
+                    textboxes[y, x].Multiline = false;
                     textboxes[y, x].TextAlign = HorizontalAlignment.Center;
+
                     textboxes[y, x].Font = new Font("Arial", 14, FontStyle.Regular);
                     textboxes[y, x].TextChanged += on_number_changed;
                     textboxes[y, x].KeyPress += on_key_press;
@@ -412,9 +414,17 @@ namespace Sudoku
 
         private void LayoutBoard()
         {
+
+
             float boardProportion = 0.82f;
-            int minSide = Math.Min(ClientSize.Width, ClientSize.Height);
+            int minSide = Math.Min(ClientSize.Width, ClientSize.Height );
+
             int computedBoxSize = Math.Max(24, (int)(minSide * boardProportion / 9f));
+            var font = textboxes[0, 0].Font;
+            var computed_font = new Font(font.FontFamily, computedBoxSize, font.Style, GraphicsUnit.Pixel);
+            Size text_size = TextRenderer.MeasureText("8", computed_font);
+            computedBoxSize = text_size.Height;
+
 
             int blockGap = Math.Max(8, computedBoxSize / 3);
 
@@ -425,8 +435,6 @@ namespace Sudoku
                 (ClientSize.Width - boardWidth) / 2,
                 (ClientSize.Height - boardHeight) / 2
             );
-
-            float fontSize = Math.Max(12f, computedBoxSize * 0.55f);
 
             for (int y = 0; y < 9; y++)
             {
@@ -439,11 +447,11 @@ namespace Sudoku
                     int yPos = offset.Y + y * computedBoxSize + extraY;
 
                     textboxes[y, x].SetBounds(xPos, yPos, computedBoxSize, computedBoxSize);
-                    textboxes[y, x].Font = new Font(textboxes[y, x].Font.FontFamily, fontSize, textboxes[y, x].Font.Style);
+                    textboxes[y, x].Font = computed_font;
                 }
             }
 
-            Invalidate();
+            //Invalidate();
         }
 
         protected override void OnPaint(PaintEventArgs e)
