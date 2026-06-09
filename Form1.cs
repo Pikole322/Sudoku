@@ -11,6 +11,7 @@ namespace Sudoku
         int[,] table;
         TextBox[,] textboxes = new TextBox[9, 9];
 
+        private Menu menu;
         private Label lblTimer;
         private Label lblErrors;
         private System.Windows.Forms.Timer gameTimer;
@@ -32,10 +33,10 @@ namespace Sudoku
 
         public class Menu
         {
-            private ComboBox comboDifficulty;
-            private Button btnStart;
-            private Label lblDifficulty;
-            private Label lblCreatedBy;
+            public ComboBox comboDifficulty;
+            public Button btnStart;
+            public Label lblDifficulty;
+            public Label lblCreatedBy;
             private Control[] controls;
             private const int controlWidth = 250;
             private const int buttonHeight = 70;
@@ -102,7 +103,7 @@ namespace Sudoku
                 mainForm.Resize += (s, e) => PositionControls(mainForm);
             }
 
-            private void PositionControls(Form mainForm)
+            public void PositionControls(Form mainForm)
             {
                 int leftRight = Math.Max(0, mainForm.ClientSize.Width - controlWidth - marginRight);
                 int currentTop = topOffset;
@@ -198,7 +199,7 @@ namespace Sudoku
                 }
             }
 
-            var menu = new Menu();
+            menu = new Menu();
             menu.Attach(this, (difficulty) => gra(difficulty));
 
             LayoutBoard();
@@ -414,10 +415,24 @@ namespace Sudoku
 
         private void LayoutBoard()
         {
-
+            int additional_height = 0;
 
             float boardProportion = 0.82f;
-            int minSide = Math.Min(ClientSize.Width, ClientSize.Height );
+            int minSide = Math.Min(ClientSize.Width, ClientSize.Height);
+            int total_widgets_width = lvBestTimes.Width + menu.comboDifficulty.Width + minSide;
+
+            if (total_widgets_width > ClientSize.Width)
+            {
+                additional_height = (int)((lblErrors.Height + lblTimer.Height + lvBestTimes.Height + menu.lblCreatedBy.Height) * 1.2); //Dodanie pustego miejsca na dole, by przesunac widgety
+
+                move_widgets_under_board();
+            }
+            else
+                reset_positions();
+
+           
+
+            minSide -= additional_height;
 
             int computedBoxSize = Math.Max(24, (int)(minSide * boardProportion / 9f));
             var font = textboxes[0, 0].Font;
@@ -433,7 +448,7 @@ namespace Sudoku
 
             Point offset = new Point(
                 (ClientSize.Width - boardWidth) / 2,
-                (ClientSize.Height - boardHeight) / 2
+                (ClientSize.Height - boardHeight - additional_height) / 2
             );
 
             for (int y = 0; y < 9; y++)
@@ -452,6 +467,40 @@ namespace Sudoku
             }
 
             //Invalidate();
+        }
+
+        private void reset_positions()
+        {
+            menu.PositionControls(this);
+            lblTimer.Left = 10;
+            lblTimer.Top = 10;
+
+            lblErrors.Left = 10;
+            lblErrors.Top = lblTimer.Bottom + 8;
+
+            lvBestTimes.Left = 10;
+            lvBestTimes.Top = lblErrors.Bottom + 8;
+        }
+
+        private void move_widgets_under_board()
+        {
+            lvBestTimes.Left = ClientSize.Width / 3 - lvBestTimes.Width / 2;
+            lvBestTimes.Top = menu.lblCreatedBy.Top - lvBestTimes.Height - 8;
+
+            lblTimer.Left = lvBestTimes.Left;
+            lblTimer.Top = lvBestTimes.Top - lblTimer.Height - 8;
+
+            lblErrors.Left = lblTimer.Left;
+            lblErrors.Top =  lblTimer.Top - lblErrors.Height - 8;
+
+            menu.btnStart.Left = (int)(ClientSize.Width * (2f / 3f) - menu.btnStart.Width / 2);
+            menu.btnStart.Top = menu.lblCreatedBy.Top - menu.btnStart.Height - 8;
+
+            menu.comboDifficulty.Left = menu.btnStart.Left;
+            menu.comboDifficulty.Top = menu.btnStart.Top - menu.comboDifficulty.Height - 8;
+
+            menu.lblDifficulty.Left = menu.comboDifficulty.Left;
+            menu.lblDifficulty.Top = menu.comboDifficulty.Top - menu.lblDifficulty.Height - 8;
         }
 
         protected override void OnPaint(PaintEventArgs e)
