@@ -501,6 +501,22 @@ namespace Sudoku
 
             menu.lblDifficulty.Left = menu.comboDifficulty.Left;
             menu.lblDifficulty.Top = menu.comboDifficulty.Top - menu.lblDifficulty.Height - 8;
+
+            const int widget_space = 40;
+            int distance_width = menu.btnStart.Left - lvBestTimes.Right;
+            if (distance_width < widget_space)
+            {
+                //collapse_width = Math.Abs(collapse_width);
+                //lewe widgety
+                lvBestTimes.Left += distance_width / 2 - widget_space / 2;
+                lblTimer.Left += distance_width / 2 - widget_space / 2;
+                lblErrors.Left += distance_width / 2 - widget_space / 2;
+
+                //prawe widgety
+                menu.btnStart.Left -= (distance_width / 2 + widget_space / 2);
+                menu.comboDifficulty.Left -= (distance_width / 2 + widget_space / 2);
+                menu.lblDifficulty.Left -= (distance_width / 2 + widget_space / 2);
+            }
         }
 
         protected override void OnPaint(PaintEventArgs e)
